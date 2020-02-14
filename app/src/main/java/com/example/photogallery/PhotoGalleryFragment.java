@@ -62,6 +62,7 @@ public class PhotoGalleryFragment extends Fragment{
 
         public void bindGalleryItems(GalleryItem item){
             mTitleTextView.setText(item.toString());
+            Log.i(TAG, "item.toString(): " + item.toString());
         }
     }
 
@@ -100,6 +101,7 @@ public class PhotoGalleryFragment extends Fragment{
 //            } catch (IOException ioe){
 //                Log.e(TAG, "Failed to fetch URL: ", ioe);
 //            }
+
             return new FlickrFetchr().fetchItems();
         }
 
