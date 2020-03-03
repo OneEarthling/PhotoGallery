@@ -3,6 +3,7 @@ package com.example.photogallery;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +25,7 @@ public class PhotoGalleryFragment extends Fragment{
 
     private RecyclerView mPhotoRecyclerView;
     private List<GalleryItem> mItems = new ArrayList<>();
+    GridLayoutManager mGridLayoutManager;
     private int curPage = 1;
     private int maxPage = 4;
     private boolean isLoading = false;
@@ -49,7 +51,7 @@ public class PhotoGalleryFragment extends Fragment{
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                if (!isLoading && dy > 0  && curPage < maxPage){
+                if (!isLoading && dy > 0  && curPage < maxPage && mGridLayoutManager.findLastVisibleItemPosition() >= (mItems.size()-1)){
                     Log.d(TAG, "dy: " + dy);
                     Log.d(TAG, "Fetching more items");
                     curPage++;
@@ -57,6 +59,21 @@ public class PhotoGalleryFragment extends Fragment{
                     new FetchItemsTask().execute();
                 }
 
+            }
+        });
+        mPhotoRecyclerView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                int oldSize = mItems.size();
+                mPhotoRecyclerView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                float columnWidthInPixels = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 140, getActivity().getResources().getDisplayMetrics());
+                int width = mPhotoRecyclerView.getWidth();
+                int columnNumber = Math.round(width / columnWidthInPixels);
+                mGridLayoutManager = new GridLayoutManager(getActivity(), columnNumber);
+                mPhotoRecyclerView.setLayoutManager(mGridLayoutManager);
+                //mPhotoRecyclerView.smoothScrollToPosition(oldSize);
+                isLoading = false;
+                setupAdapter();
             }
         });
 
@@ -132,14 +149,11 @@ public class PhotoGalleryFragment extends Fragment{
                 mItems.addAll(items);
                 setupAdapter();
             } else {
-                final int oldSize = mItems.size();
                 mItems.addAll(items);
                 mPhotoRecyclerView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                     @Override
                     public void onGlobalLayout() {
                         mPhotoRecyclerView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                        // Scroll to first row of newly added set
-                        mPhotoRecyclerView.smoothScrollToPosition(oldSize);
                         isLoading = false;
                     }
                 });
