@@ -66,39 +66,40 @@ public class GalleryItem {
     @interface JsonRequired
     {
     }
+}
 
-    class AnnotatedDeserializer<T> implements JsonDeserializer<T>
+class AnnotatedDeserializer<T> implements JsonDeserializer<T>
+{
+
+    public T deserialize(JsonElement je, Type type, JsonDeserializationContext jdc) throws JsonParseException
     {
+        T pojo = new Gson().fromJson(je, type);
 
-        public T deserialize(JsonElement je, Type type, JsonDeserializationContext jdc) throws JsonParseException
+        Field[] fields = pojo.getClass().getDeclaredFields();
+        for (Field f : fields)
         {
-            T pojo = new Gson().fromJson(je, type);
-
-            Field[] fields = pojo.getClass().getDeclaredFields();
-            for (Field f : fields)
+            if (f.getAnnotation(GalleryItem.JsonRequired.class) != null)
             {
-                if (f.getAnnotation(JsonRequired.class) != null)
+                try
                 {
-                    try
+                    f.setAccessible(true);
+                    if (f.get(pojo) == null)
                     {
-                        f.setAccessible(true);
-                        if (f.get(pojo) == null)
-                        {
-                            throw new JsonParseException("Missing field in JSON: " + f.getName());
-                        }
-                    }
-                    catch (IllegalArgumentException ex)
-                    {
-                        Logger.getLogger(AnnotatedDeserializer.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    catch (IllegalAccessException ex)
-                    {
-                        Logger.getLogger(AnnotatedDeserializer.class.getName()).log(Level.SEVERE, null, ex);
+                        throw new JsonParseException("Missing field in JSON: " + f.getName());
+                        //continue;
                     }
                 }
+                catch (IllegalArgumentException ex)
+                {
+                    Logger.getLogger(AnnotatedDeserializer.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                catch (IllegalAccessException ex)
+                {
+                    Logger.getLogger(AnnotatedDeserializer.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
-            return pojo;
-
         }
+        return pojo;
+
     }
 }

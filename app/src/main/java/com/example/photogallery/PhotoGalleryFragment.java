@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -23,6 +24,9 @@ public class PhotoGalleryFragment extends Fragment{
 
     private RecyclerView mPhotoRecyclerView;
     private List<GalleryItem> mItems = new ArrayList<>();
+    private int curPage = 1;
+    private int maxPage = 4;
+    private boolean isLoading = false;
 
     public static Fragment newInstance() {
         return new PhotoGalleryFragment();
@@ -40,6 +44,21 @@ public class PhotoGalleryFragment extends Fragment{
         View v = inflater.inflate(R.layout.fragment_photo_gallery, container, false);
         mPhotoRecyclerView = v.findViewById(R.id.photo_recycler_view);
         mPhotoRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 3));
+
+        mPhotoRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if (!isLoading && dy > 0  && curPage < maxPage){
+                    Log.d(TAG, "dy: " + dy);
+                    Log.d(TAG, "Fetching more items");
+                    curPage++;
+                    isLoading = true;
+                    new FetchItemsTask().execute();
+                }
+
+            }
+        });
 
         setupAdapter();
         return v;
@@ -101,14 +120,31 @@ public class PhotoGalleryFragment extends Fragment{
 //            } catch (IOException ioe){
 //                Log.e(TAG, "Failed to fetch URL: ", ioe);
 //            }
-
-            return new FlickrFetchr().fetchItems();
+            return new FlickrFetchr().fetchItems(curPage);
         }
 
         @Override
         protected void onPostExecute(List<GalleryItem> items) {
-            mItems = items;
-            setupAdapter();
+//            mItems = items;
+//            setupAdapter();
+            Log.i("SIZE", "size: " + mItems.size());
+            if ( mItems.size() == 0) {
+                mItems.addAll(items);
+                setupAdapter();
+            } else {
+                final int oldSize = mItems.size();
+                mItems.addAll(items);
+                mPhotoRecyclerView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        mPhotoRecyclerView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        // Scroll to first row of newly added set
+                        mPhotoRecyclerView.smoothScrollToPosition(oldSize);
+                        isLoading = false;
+                    }
+                });
+                mPhotoRecyclerView.getAdapter().notifyDataSetChanged();
+            }
         }
     }
 }

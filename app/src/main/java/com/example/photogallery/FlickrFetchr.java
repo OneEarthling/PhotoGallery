@@ -4,6 +4,7 @@ import android.net.Uri;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONArray;
@@ -50,7 +51,7 @@ public class FlickrFetchr {
         return new String(getUrlBytes(urlSpec));
     }
 
-    public List<GalleryItem> fetchItems(){
+    public List<GalleryItem> fetchItems(int page){
         List<GalleryItem> items = new ArrayList<>();
 
         try{
@@ -58,6 +59,7 @@ public class FlickrFetchr {
                     .buildUpon()
                     .appendQueryParameter("method", "flickr.photos.getRecent")
                     .appendQueryParameter("api_key", API_KEY)
+                    .appendQueryParameter("page", String.valueOf(page))
                     .appendQueryParameter("format", "json")
                     .appendQueryParameter("nojsoncallback", "1")
                     .appendQueryParameter("extras", "url_s")
@@ -75,29 +77,11 @@ public class FlickrFetchr {
         return items;
     }
 
-//    private void parseItmes(List<GalleryItem> items, JSONObject jsonBody) throws IOException, JSONException{
-//        JSONObject photosJsonObject = jsonBody.getJSONObject("photos");
-//        JSONArray photosJsonArray = photosJsonObject.getJSONArray("photo");
-//
-//        for (int i =0; i < photosJsonArray.length(); i++){
-//            JSONObject photoJsonObject = photosJsonArray.getJSONObject(i);
-//
-//            GalleryItem item = new GalleryItem();
-//            item.setId(photoJsonObject.getString("id"));
-//            item.setCaption(photoJsonObject.getString("title"));
-//
-//            if (!photoJsonObject.has("url_s")) {
-//                Log.i(TAG, "has not");
-//                continue;
-//            }
-////            Log.i(TAG, "size" + items.size());
-//            item.setUrl(photoJsonObject.getString("url_s"));
-//            items.add(item);
-//        }
-//    }
-
     private void parseItmes(List<GalleryItem> items, JSONObject jsonBody) throws IOException, JSONException{
         Gson gson = new Gson();
+//        Builder()
+//                .registerTypeAdapter(GalleryItem.class, new AnnotatedDeserializer<GalleryItem>())
+//                .create();
         Type galleryItemType = new TypeToken<ArrayList<GalleryItem>>(){}.getType();
         JSONObject photosJsonObject = jsonBody.getJSONObject("photos");
         JSONArray photosJsonArray = photosJsonObject.getJSONArray("photo");
