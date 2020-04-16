@@ -2,10 +2,12 @@ package com.example.photogallery;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
 import android.util.Log;
+import android.util.LruCache;
 
 import androidx.annotation.NonNull;
 
@@ -22,6 +24,7 @@ public class ThumbnailDownloader<T> extends HandlerThread {
     private ConcurrentMap<T, String> mRequestMap = new ConcurrentHashMap<>();
     private Handler mResponseHandler;
     private ThumbnailDownloadListener<T> mThumbnailDownloadListener;
+    private LruCache<String, Bitmap> mCache = new LruCache<String, Bitmap>(10*1024*1024); // 10Mb
 
     public interface ThumbnailDownloadListener<T> {
         void onThumbnailDownloaded(T target, Bitmap thumbnail);
@@ -53,13 +56,20 @@ public class ThumbnailDownloader<T> extends HandlerThread {
     private void handleRequest(final T target) {
         try{
             final String url = mRequestMap.get(target);
+            final Bitmap bitmap;
             if (url == null) {
                 return;
             }
 
-            byte[] bitmapBytes = new FlickrFetchr().getUrlBytes(url);
-            final Bitmap bitmap = BitmapFactory.decodeByteArray(bitmapBytes, 0, bitmapBytes.length);
-            Log.i(TAG, "Bitmap created");
+            if (mCache.get(url) == null) {
+                byte[] bitmapBytes = new FlickrFetchr().getUrlBytes(url);
+                bitmap = BitmapFactory.decodeByteArray(bitmapBytes, 0, bitmapBytes.length);
+                mCache.put(url, bitmap);
+                Log.i(TAG, "Bitmap created");
+            } else {
+                bitmap = mCache.get(url);
+                Log.i(TAG, "Bitmap was get from cache");
+            }
 
             mResponseHandler.post(new Runnable() {
                 public void run() {
