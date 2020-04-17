@@ -8,9 +8,6 @@ import android.os.HandlerThread;
 import android.os.Message;
 import android.util.Log;
 import android.util.LruCache;
-
-import androidx.annotation.NonNull;
-
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -24,7 +21,7 @@ public class ThumbnailDownloader<T> extends HandlerThread {
     private ConcurrentMap<T, String> mRequestMap = new ConcurrentHashMap<>();
     private Handler mResponseHandler;
     private ThumbnailDownloadListener<T> mThumbnailDownloadListener;
-    private LruCache<String, Bitmap> mCache = new LruCache<String, Bitmap>(10*1024*1024); // 10Mb
+    public LruCache<String, Bitmap> mCache = new LruCache<String, Bitmap>(10*1024*1024); // 10Mb
 
     public interface ThumbnailDownloadListener<T> {
         void onThumbnailDownloaded(T target, Bitmap thumbnail);
@@ -106,5 +103,9 @@ public class ThumbnailDownloader<T> extends HandlerThread {
     public void clearQueue(){
         mRequestHandler.removeMessages(MESSAGE_DOWNLOAD);
         mRequestMap.clear();
+    }
+
+    public void clearCache(){
+        mCache.evictAll();
     }
 }
