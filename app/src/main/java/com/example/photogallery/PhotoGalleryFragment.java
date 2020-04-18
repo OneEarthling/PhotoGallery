@@ -1,5 +1,6 @@
 package com.example.photogallery;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -15,7 +16,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.SearchView;
 
 import androidx.annotation.NonNull;
@@ -26,10 +30,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
+import static androidx.core.content.ContextCompat.getSystemService;
+
 public class PhotoGalleryFragment extends Fragment{
     private static final String TAG = "PhotoGalleryFragment";
 
     private RecyclerView mPhotoRecyclerView;
+    private ProgressBar mProgressBar;
     private List<GalleryItem> mItems = new ArrayList<>();
     private ThumbnailDownloader<Integer> mThumbnailDownloader;
     private GridLayoutManager mGridLayoutManager;
@@ -48,7 +55,6 @@ public class PhotoGalleryFragment extends Fragment{
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
         setHasOptionsMenu(true);
-        updateItems();
 
         Handler responseHandler = new Handler();
         mThumbnailDownloader = new ThumbnailDownloader<>(responseHandler);
@@ -59,6 +65,10 @@ public class PhotoGalleryFragment extends Fragment{
                         mPhotoRecyclerView.getAdapter().notifyItemChanged(position);
 //                        Drawable drawable = new BitmapDrawable(getResources(), bitmap);
 //                        photoHolder.bindDrawable(drawable);
+//                        View child = mPhotoRecyclerView.getChildAt(position);
+//                        child.findViewById(R.id.progress_bar);
+//                        child.progressBar.setVisibility(View.GONE);
+//                        child.mItemImageView.setVisibility(View.VISIBLE);
                     }
                 }
         );
@@ -70,6 +80,7 @@ public class PhotoGalleryFragment extends Fragment{
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_photo_gallery, container, false);
+
         mPhotoRecyclerView = v.findViewById(R.id.photo_recycler_view);
         mPhotoRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 3));
 
@@ -133,6 +144,11 @@ public class PhotoGalleryFragment extends Fragment{
         if (mPhotoRecyclerView.getAdapter() == null) {
             setupAdapter();
         }
+
+        mProgressBar = v.findViewById(R.id.progress_bar);
+        mProgressBar.setVisibility(View.VISIBLE);
+
+        updateItems();
         return v;
     }
 
@@ -148,6 +164,8 @@ public class PhotoGalleryFragment extends Fragment{
             public boolean onQueryTextSubmit(String query) {
                 Log.d(TAG, "QueryTextSubmit: " + query);
                 QueryPreferences.setStoredQuery(getActivity(), query);
+                searchView.onActionViewCollapsed();
+                mProgressBar.setVisibility(View.VISIBLE);
                 updateItems();
                 return true;
             }
@@ -254,11 +272,32 @@ public class PhotoGalleryFragment extends Fragment{
         }
     }
 
+    public void showProgressBar()
+    {
+        mProgressBar.setVisibility(View.VISIBLE);
+        mPhotoRecyclerView.setVisibility(View.GONE);
+    }
+
+    public void hideProgressBar()
+    {
+        mProgressBar.setVisibility(View.GONE);
+        mPhotoRecyclerView.setVisibility(View.VISIBLE);
+    }
+
     private class FetchItemsTask extends AsyncTask<Void, Void, List<GalleryItem>>{
         private String mQuery;
 
         public FetchItemsTask(String query){
             mQuery = query;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            if (mItems.size() == 0){
+                //mProgressBar.setVisibility(View.VISIBLE);
+                //showProgressBar();
+            }
         }
 
         @Override
@@ -275,6 +314,7 @@ public class PhotoGalleryFragment extends Fragment{
         protected void onPostExecute(List<GalleryItem> items) {
             mItems = items;
             setupAdapter();
+            mProgressBar.setVisibility(View.GONE);
             //isLoading = false;
             Log.i("SIZE", "size: " + mItems.size());
             if ( mItems.size() != 0) {
