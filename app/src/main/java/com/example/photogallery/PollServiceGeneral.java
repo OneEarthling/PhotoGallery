@@ -1,5 +1,6 @@
 package com.example.photogallery;
 
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -16,12 +17,24 @@ import java.util.List;
 
 public class PollServiceGeneral {
     private static final String TAG = "PollServiceGeneral";
+    public static final String ACTION_SHOW_NOTIFICATION = "com.example.android.photogallery.SHOW_NOTIFICATION";
+    public static final String PERM_PRIVATE = "com.example.android.photogallery.PRIVATE";
+    public static final String REQUEST_CODE = "REQUEST_CODE";
+    public static final String NOTIFICATION = "NOTIFICATION";
 
     public static Intent newIntent(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             return new Intent(context, PollJobService.class);
         } else {
             return new Intent(context, PollService.class);
+        }
+    }
+
+    public static void setServiceAlarm(Context context, boolean isOn){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            PollJobService.setServiceAlarm(context, isOn);
+        } else {
+            PollService.setServiceAlarm(context, isOn);
         }
     }
 
@@ -80,19 +93,22 @@ public class PollServiceGeneral {
                         .setAutoCancel(true);
             }
 
-            notificationManager.notify(0, builder.build());
+            //notificationManager.notify(0, builder.build());
+
+            context.sendBroadcast(new Intent(ACTION_SHOW_NOTIFICATION), PERM_PRIVATE);
         }
 
         QueryPreferences.setLastResultId(context, resultId);
 
     }
 
-    /*private static void showBackgroundNotification(Context context, int requestCode, Notification notificationCompat) {
+    private static void showBackgroundNotification(Context context, int requestCode, Notification notificationCompat) {
         Intent i = new Intent(ACTION_SHOW_NOTIFICATION);
         i.putExtra(REQUEST_CODE, requestCode);
         i.putExtra(NOTIFICATION, notificationCompat);
-        context.sendOrderedBroadcast(i, PERM_PRIVATE, null, null, Activity.RESULT_OK, null, null);
-    }*/
+        context.sendOrderedBroadcast(i, PERM_PRIVATE, null, null,
+                Activity.RESULT_OK, null, null);
+    }
 
     public static boolean isNetworkAvailableAndConnected(Context context) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(context.CONNECTIVITY_SERVICE);

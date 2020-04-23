@@ -34,7 +34,7 @@ import java.util.List;
 
 import static androidx.core.content.ContextCompat.getSystemService;
 
-public class PhotoGalleryFragment extends Fragment{
+public class PhotoGalleryFragment extends VisibleFragment{
     private static final String TAG = "PhotoGalleryFragment";
 
     private RecyclerView mPhotoRecyclerView;
