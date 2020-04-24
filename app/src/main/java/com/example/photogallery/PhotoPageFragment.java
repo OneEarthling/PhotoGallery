@@ -1,19 +1,23 @@
 package com.example.photogallery;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class PhotoPageFragment extends VisibleFragment {
@@ -52,9 +56,7 @@ public class PhotoPageFragment extends VisibleFragment {
             public void onProgressChanged(WebView view, int newProgress) {
                 if (newProgress == 100){
                     mProgressBar.setVisibility(View.GONE);
-                    Log.i("one", "GONE");
                 } else {
-                    Log.i("one", "visible");
                     mProgressBar.setVisibility(View.VISIBLE);
                     mProgressBar.setProgress(newProgress);
                 }
@@ -66,7 +68,20 @@ public class PhotoPageFragment extends VisibleFragment {
                 activity.getSupportActionBar().setSubtitle(title);
             }
         });
-        mWebView.setWebViewClient(new WebViewClient());
+        mWebView.setWebViewClient(new WebViewClient() {
+            @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                if (uri.getScheme().equals("http") || uri.getScheme().equals("https")){
+                    return false;
+                } else {
+                    Intent i = new Intent(Intent.ACTION_VIEW, uri);
+                    startActivity(i);
+                    return true;
+                }
+            }
+        });
         mWebView.loadUrl(mUri.toString());
         return v;
     }
