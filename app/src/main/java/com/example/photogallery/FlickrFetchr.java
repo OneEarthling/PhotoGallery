@@ -102,7 +102,7 @@ public class FlickrFetchr {
 
 
     private void parseItmes(List<GalleryItem> items, JSONObject jsonBody) throws IOException, JSONException{
-        Gson gson = new Gson();
+        //Gson gson = new Gson();
 //        Builder()
 //                .registerTypeAdapter(GalleryItem.class, new AnnotatedDeserializer<GalleryItem>())
 //                .create();
@@ -119,6 +119,7 @@ public class FlickrFetchr {
 
             GalleryItem item = new GalleryItem();
             item.setId(photoJsonObject.getString("id"));
+            item.setOwner(photoJsonObject.getString("owner"));
             item.setCaption(photoJsonObject.getString("title"));
 
             if (!photoJsonObject.has("url_s")) {

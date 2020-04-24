@@ -1,5 +1,7 @@
 package com.example.photogallery;
 
+import android.net.Uri;
+
 import androidx.annotation.NonNull;
 
 import com.google.gson.Gson;
@@ -30,7 +32,24 @@ public class GalleryItem {
     @Expose()
     @JsonRequired
     private String mUrl;
+    private String mOwner;
 
+
+    public String getOwner() {
+        return mOwner;
+    }
+
+    public void setOwner(String owner) {
+        mOwner = owner;
+    }
+
+    public Uri getPhotoPageUri(){
+        return Uri.parse("https://www.flickr.com/photos/")
+        .buildUpon()
+        .appendPath(mOwner)
+        .appendPath(mId)
+        .build();
+    }
 
     @Override
     public String toString() {
@@ -60,6 +79,7 @@ public class GalleryItem {
     public void setUrl(String url) {
         mUrl = url;
     }
+
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
